@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>IoT Lesson: ESP32-S3 Web Monitor</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--tx:#17202e;--mu:#586577;--ac:#0b62c4;--ac2:#e6f0fc;--bd:#d6dce6;--ok:#17803a;--wr:#a8530a;--cd:#0f172a;--ct:#e2e8f0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d131f;--card:#172033;--tx:#e8edf5;--mu:#9aa7ba;--ac:#6db0ff;--ac2:#1b2d49;--bd:#2a364d;--ok:#4ade80;--wr:#fbbf24;--cd:#070b13;--ct:#e2e8f0;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d131f;--card:#172033;--tx:#e8edf5;--mu:#9aa7ba;--ac:#6db0ff;--ac2:#1b2d49;--bd:#2a364d;--ok:#4ade80;--wr:#fbbf24;--cd:#070b13;--ct:#e2e8f0;color-scheme:dark}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:17px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;display:flex;flex-direction:column}
+#top{height:5px;background:var(--bd)}#bar{height:100%;width:0;background:var(--ac);transition:width .3s}
+#main{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 22px}
+.s{display:none;max-width:980px;margin:0 auto}.s.on{display:block}
+.tag{display:inline-block;background:var(--ac2);color:var(--ac);font-weight:700;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:99px}
+.tag.a{background:#fdebd3;color:#8a4207}
+h1{font-size:2.1rem;margin:.4em 0 .2em;line-height:1.15}h2{font-size:1.6rem;margin:.35em 0 .5em}h3{font-size:1.1rem;margin:.2em 0 .3em;color:var(--ac)}
+p{margin:.4em 0}ul,ol{margin:.3em 0;padding-left:1.3em}li{margin:.25em 0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px 16px}
+.mu{color:var(--mu)}.ok{color:var(--ok);font-weight:600}.wr{color:var(--wr);font-weight:600}
+.flow{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;margin:14px 0}
+.flow .c{text-align:center;padding:10px 14px;min-width:120px;font-weight:600}
+.flow i{font-style:normal;font-size:1.4rem;color:var(--ac)}
+table{border-collapse:collapse;width:100%;font-size:.95rem;display:block;overflow-x:auto}
+th,td{border:1px solid var(--bd);padding:7px 10px;text-align:left;vertical-align:top}th{background:var(--ac2)}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em;background:var(--ac2);padding:1px 5px;border-radius:4px}
+pre{background:var(--cd);color:var(--ct);padding:10px 12px;border-radius:8px;overflow-x:auto;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;margin:6px 0}
+pre code{background:none;padding:0;font-size:inherit}
+.chg{display:grid;gap:10px}.chg .c{padding:10px 14px}
+.b{font-size:.75rem;font-weight:800;padding:2px 8px;border-radius:5px;margin-right:6px;color:#fff}.b.add{background:#17803a}.b.chn{background:#c2620a}
+.cb{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:6px 0}
+button{font:inherit;cursor:pointer;border:0;border-radius:8px;padding:9px 18px;background:var(--ac);color:#fff;font-weight:600}
+button.ghost{background:var(--ac2);color:var(--ac)}button:disabled{opacity:.4;cursor:default}
+textarea.code{width:100%;box-sizing:border-box;height:calc(100vh - 300px);min-height:230px;background:var(--cd);color:var(--ct);border:1px solid var(--bd);border-radius:10px;padding:12px;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow:auto;resize:vertical}
+details{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 14px;margin:8px 0}summary{cursor:pointer;font-weight:600}
+#nav{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 18px;border-top:1px solid var(--bd);background:var(--card)}
+@media (max-width:640px){.g2{grid-template-columns:1fr}h1{font-size:1.6rem}textarea.code{height:50vh}}
+</style>
+</head>
+<body>
+<div id="top"><div id="bar"></div></div>
+<div id="main">
+
+<!-- 1 -->
+<section class="s on">
+  <span class="tag">Internet of Things Lab</span>
+  <h1>Monitor and Control the World with an ESP32-S3</h1>
+  <p class="mu">Build a web server that reads a DHT11 sensor and switches a device ON and OFF from any phone or computer.</p>
+  <div class="g2" style="margin-top:18px">
+    <div class="c"><h3>Activity 1</h3><p>Web monitor with manual ON/OFF control.</p></div>
+    <div class="c"><h3>Activity 2</h3><p>Upgrade: an automatic thermostat with an adjustable temperature limit.</p></div>
+  </div>
+  <p class="mu" style="margin-top:18px">Navigate with the Next and Back buttons or the arrow keys.</p>
+</section>
+
+<!-- 2 -->
+<section class="s">
+  <span class="tag">Introduction</span>
+  <h2>Learning Objectives and Materials</h2>
+  <div class="g2">
+    <div class="c"><h3>By the end you will be able to:</h3>
+      <ol><li>Explain how a client and a server communicate.</li><li>Describe how the DHT11 sensor and a GPIO output pin work.</li><li>Upload and test a working web server on the ESP32-S3.</li><li>Upgrade a program by adding variables, functions and routes.</li></ol></div>
+    <div class="c"><h3>Materials</h3>
+      <ul><li>ESP32-S3 development board and USB cable</li><li>DHT11 sensor (3-pin module or 4-pin bare sensor)</li><li>LED and 220 Ω resistor, or a relay module</li><li>Breadboard and jumper wires</li><li>Arduino IDE with the ESP32 board package</li><li>A Wi-Fi network (2.4 GHz)</li></ul></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="s">
+  <span class="tag">Theory 1</span>
+  <h2>How the System Works: Client and Server</h2>
+  <div class="flow">
+    <div class="c">Browser<br><span class="mu" style="font-weight:400">client</span></div><i>⇄</i>
+    <div class="c">Wi-Fi router</div><i>⇄</i>
+    <div class="c">ESP32-S3<br><span class="mu" style="font-weight:400">server</span></div><i>⇄</i>
+    <div class="c">DHT11 + output</div>
+  </div>
+  <div class="c">
+    <ul>
+      <li>The <b>client</b> (your browser) sends a <b>request</b>, for example “give me the page”.</li>
+      <li>The <b>server</b> (the ESP32-S3) sends back a <b>response</b>, such as a web page or data.</li>
+      <li>Both devices must be on the <b>same Wi-Fi network</b>. The server is found by its <b>IP address</b>, printed in the Serial Monitor.</li>
+      <li>This idea of connecting physical devices to the network is called the <b>Internet of Things (IoT)</b>.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="s">
+  <span class="tag">Theory 2</span>
+  <h2>The Sensor and the Output Pin</h2>
+  <div class="g2">
+    <div class="c"><h3>DHT11 sensor</h3>
+      <ul><li>Measures <b>temperature</b> (0–50 °C, ±2 °C) and <b>humidity</b> (20–90 %, ±5 %).</li><li>Sends both values on <b>one data wire</b> as a digital signal.</li><li>Slow sensor: read it <b>no more than once per second</b>.</li><li>If a reading fails, the library returns <code>NaN</code> (“not a number”).</li></ul></div>
+    <div class="c"><h3>GPIO output</h3>
+      <ul><li>A GPIO pin is a programmable connection on the chip.</li><li><code>HIGH</code> = 3.3 V (ON), <code>LOW</code> = 0 V (OFF).</li><li>An LED needs a <b>resistor</b> to limit current.</li><li>A <b>relay</b> lets the small 3.3 V signal switch a bigger device. Some relays switch on with <code>LOW</code> (“active low”).</li></ul></div>
+  </div>
+  <p class="wr" style="margin-top:12px">Safety: never connect mains electricity (230 V) without teacher supervision. Use an LED for this lab.</p>
+</section>
+
+<!-- 5 -->
+<section class="s">
+  <span class="tag">Theory 3</span>
+  <h2>Routes, JSON and Polling</h2>
+  <p>A <b>route</b> is a web address on the server that triggers a piece of code.</p>
+  <table>
+    <tr><th>Route</th><th>What it does</th><th>Response</th></tr>
+    <tr><td><code>/</code></td><td>Sends the web page</td><td>HTML</td></tr>
+    <tr><td><code>/data</code></td><td>Sends the latest readings</td><td>JSON</td></tr>
+    <tr><td><code>/set?state=1</code></td><td>Turns the output ON (<code>0</code> = OFF)</td><td>Text</td></tr>
+  </table>
+  <div class="g2" style="margin-top:12px">
+    <div class="c"><h3>JSON</h3><p>A simple text format for data. Example from <code>/data</code>:</p><pre><code>{"temp":28.0,"hum":65,"output":false}</code></pre></div>
+    <div class="c"><h3>Polling</h3><p>The page runs JavaScript that asks <code>/data</code> every 2 seconds and updates the numbers. No page reload is needed.</p></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="s">
+  <span class="tag a">Activity 1</span>
+  <h2>Build the Web Monitor</h2>
+  <div class="g2">
+    <div class="c"><h3>Wiring</h3>
+      <table><tr><th>Part</th><th>Connects to</th></tr>
+      <tr><td>DHT11 VCC</td><td>3V3</td></tr><tr><td>DHT11 GND</td><td>GND</td></tr><tr><td>DHT11 DATA</td><td>GPIO 4</td></tr>
+      <tr><td>LED (long leg) via 220 Ω</td><td>GPIO 5</td></tr><tr><td>LED (short leg)</td><td>GND</td></tr></table>
+      <p class="mu">A bare 4-pin DHT11 needs a 10 kΩ resistor between DATA and 3V3.</p></div>
+    <div class="c"><h3>Steps</h3>
+      <ol><li>Install libraries: <b>DHT sensor library</b> and <b>Adafruit Unified Sensor</b>.</li><li>Select board <b>ESP32S3 Dev Module</b>.</li><li>Copy the code on the next slide and paste it into a new sketch.</li><li>Type your Wi-Fi name and password.</li><li>Upload, open Serial Monitor (115200), and read the IP address.</li><li>Type that IP into your browser.</li></ol></div>
+  </div>
+  <div class="c" style="margin-top:12px"><h3>Key ideas in the code</h3>
+    <p><code>setup()</code> runs once (Wi-Fi, routes). <code>loop()</code> runs forever (handle visitors, read the sensor every 2 s). <code>server.on("/data", handleData)</code> links a route to a function.</p></div>
+</section>
+
+<!-- 7 -->
+<section class="s">
+  <span class="tag a">Activity 1</span>
+  <h2>Full Code: Web Monitor</h2>
+  <div class="cb"><span class="mu">Complete and ready to upload. Only change the two Wi-Fi lines.</span><button onclick="copyCode('c1',this)">Copy full code</button></div>
+  <textarea id="c1" class="code" readonly wrap="off" spellcheck="false">/*
+  ACTIVITY 1: ESP32-S3 Web Server - DHT11 monitor + ON/OFF output
+  Libraries: "DHT sensor library" (Adafruit), "Adafruit Unified Sensor"
+  Board: ESP32S3 Dev Module
+  Wiring: DHT11 DATA -> GPIO 4, Output (LED/relay) -> GPIO 5
+*/
+
+#include <WiFi.h>
+#include <WebServer.h>
+#include <DHT.h>
+
+// ---------- User settings ----------
+const char* WIFI_SSID     = "YOUR_WIFI_NAME";
+const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+
+#define DHT_PIN     4
+#define DHT_TYPE    DHT11
+#define OUTPUT_PIN  5
+#define RELAY_ACTIVE_LOW false   // set true if your relay turns on with LOW
+// -----------------------------------
+
+DHT dht(DHT_PIN, DHT_TYPE);
+WebServer server(80);
+
+bool outputOn = false;
+float lastTemp = NAN;
+float lastHum  = NAN;
+unsigned long lastRead = 0;
+const unsigned long READ_INTERVAL = 2000;  // DHT11 is slow: read every 2 s
+
+void applyOutput() {
+  bool level = RELAY_ACTIVE_LOW ? !outputOn : outputOn;
+  digitalWrite(OUTPUT_PIN, level ? HIGH : LOW);
+}
+
+void readSensor() {
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+  if (!isnan(h) && !isnan(t)) {   // keep old values if the reading failed
+    lastHum = h;
+    lastTemp = t;
+  }
+}
+
+const char INDEX_HTML[] PROGMEM = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ESP32-S3 Monitor</title>
+<style>
+  body { font-family: Arial, sans-serif; background:#111; color:#eee; text-align:center; margin:0; padding:20px; }
+  h1 { font-size:1.4rem; }
+  .card { background:#1e1e1e; border-radius:12px; padding:20px; margin:15px auto; max-width:340px; }
+  .value { font-size:2.6rem; font-weight:bold; }
+  .label { color:#999; }
+  button { font-size:1.1rem; padding:12px 28px; margin:6px; border:0; border-radius:8px; cursor:pointer; color:#fff; }
+  #on  { background:#2e9e4f; }
+  #off { background:#c0392b; }
+  #state { font-size:1.6rem; font-weight:bold; }
+</style>
+</head>
+<body>
+  <h1>ESP32-S3 DHT11 Monitor</h1>
+
+  <div class="card">
+    <div class="label">Temperature</div>
+    <div class="value"><span id="temp">--</span> &amp;deg;C</div>
+  </div>
+
+  <div class="card">
+    <div class="label">Humidity</div>
+    <div class="value"><span id="hum">--</span> %</div>
+  </div>
+
+  <div class="card">
+    <div class="label">Output</div>
+    <div id="state">--</div>
+    <button id="on"  onclick="setOutput(1)">ON</button>
+    <button id="off" onclick="setOutput(0)">OFF</button>
+  </div>
+
+<script>
+async function update() {
+  try {
+    const r = await fetch('/data');
+    const d = await r.json();
+    document.getElementById('temp').textContent = d.temp === null ? '--' : d.temp.toFixed(1);
+    document.getElementById('hum').textContent  = d.hum  === null ? '--' : d.hum.toFixed(0);
+    const s = document.getElementById('state');
+    s.textContent = d.output ? 'ON' : 'OFF';
+    s.style.color = d.output ? '#2ecc71' : '#e74c3c';
+  } catch (e) { }
+}
+async function setOutput(v) {
+  await fetch('/set?state=' + v);
+  update();
+}
+update();
+setInterval(update, 2000);
+</script>
+</body>
+</html>
+)rawliteral";
+
+void handleRoot() {
+  server.send_P(200, "text/html", INDEX_HTML);
+}
+
+void handleData() {
+  String json = "{\"temp\":";
+  json += isnan(lastTemp) ? "null" : String(lastTemp, 1);
+  json += ",\"hum\":";
+  json += isnan(lastHum) ? "null" : String(lastHum, 0);
+  json += ",\"output\":";
+  json += outputOn ? "true" : "false";
+  json += "}";
+  server.send(200, "application/json", json);
+}
+
+void handleSet() {
+  if (server.hasArg("state")) {
+    outputOn = (server.arg("state") == "1");
+    applyOutput();
+  }
+  server.send(200, "text/plain", outputOn ? "ON" : "OFF");
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(500);
+
+  pinMode(OUTPUT_PIN, OUTPUT);
+  applyOutput();  // start OFF
+
+  dht.begin();
+
+  Serial.printf("Connecting to %s", WIFI_SSID);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println();
+  Serial.print("Connected. Open http://");
+  Serial.println(WiFi.localIP());
+
+  server.on("/", handleRoot);
+  server.on("/data", handleData);
+  server.on("/set", handleSet);
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+
+  if (millis() - lastRead >= READ_INTERVAL) {
+    lastRead = millis();
+    readSensor();
+  }
+}
+</textarea>
+</section>
+
+<!-- 8 -->
+<section class="s">
+  <span class="tag a">Activity 2</span>
+  <h2>Upgrade: The Smart Thermostat</h2>
+  <div class="g2">
+    <div class="c"><h3>The idea</h3>
+      <p>Right now a human presses the button. In Activity 2 the ESP32-S3 decides by itself.</p>
+      <ul><li><b>AUTO mode:</b> output turns ON when temperature ≥ limit.</li><li><b>MANUAL mode:</b> the buttons work as before.</li><li>The limit can be changed from the web page with − and + buttons.</li></ul></div>
+    <div class="c"><h3>Theory: hysteresis</h3>
+      <p>If the output switched exactly at the limit, noisy readings would make it flicker ON/OFF rapidly, which damages relays and fans.</p>
+      <p>Solution: turn ON at the limit, but turn OFF only when the temperature falls <b>1 °C below</b> it. This gap is called <b>hysteresis</b>.</p></div>
+  </div>
+  <div class="c" style="margin-top:12px"><h3>Programming concepts</h3>
+    <p><b>Variable</b> (stores the mode and limit) · <b>Condition</b> (<code>if / else if</code>) · <b>Function</b> (<code>runAuto()</code>) · <b>New routes</b> (<code>/mode</code>, <code>/thr</code>).</p></div>
+</section>
+
+<!-- 9 -->
+<section class="s">
+  <span class="tag a">Activity 2</span>
+  <h2>What to Add and What to Change</h2>
+  <p class="mu">Read these first. The next slide has the complete upgraded code, so you can also just copy that.</p>
+  <div class="chg">
+    <div class="c"><span class="b add">ADD</span><b>1. New variables</b> below <code>bool outputOn = false;</code>
+<pre><code>bool autoMode = false;        // false = MANUAL, true = AUTO
+float threshold = 30.0;       // temperature limit in °C
+const float HYST = 1.0;       // hysteresis gap</code></pre></div>
+    <div class="c"><span class="b add">ADD</span><b>2. New function</b> below <code>readSensor()</code>
+<pre><code>void runAuto() {
+  if (!autoMode || isnan(lastTemp)) return;
+  if (lastTemp >= threshold) outputOn = true;
+  else if (lastTemp <= threshold - HYST) outputOn = false;
+  applyOutput();
+}</code></pre></div>
+    <div class="c"><span class="b chn">CHANGE</span><b>3. In loop()</b>: call it after reading
+<pre><code>readSensor();
+runAuto();      // NEW LINE</code></pre></div>
+    <div class="c"><span class="b chn">CHANGE</span><b>4. handleData()</b>: send two more values
+<pre><code>json += ",\"auto\":";  json += autoMode ? "true" : "false";
+json += ",\"thr\":";   json += String(threshold, 0);</code></pre>
+      <span class="mu">(place these before the line <code>json += "}";</code>)</span></div>
+    <div class="c"><span class="b chn">CHANGE</span><b>5. handleSet()</b>: pressing ON/OFF returns to manual
+<pre><code>autoMode = false;   // NEW, first line inside the if</code></pre></div>
+    <div class="c"><span class="b add">ADD</span><b>6. Two handlers</b> plus <b>register them in setup()</b>
+<pre><code>void handleMode() { if (server.hasArg("auto")) autoMode = (server.arg("auto") == "1"); ... }
+void handleThr()  { if (server.hasArg("value")) threshold = constrain(...); ... }
+
+server.on("/mode", handleMode);   // NEW, in setup()
+server.on("/thr",  handleThr);    // NEW, in setup()</code></pre></div>
+    <div class="c"><span class="b add">ADD</span><b>7. Web page</b>: a “Mode” card with AUTO/MANUAL buttons and a limit display with − and + buttons, plus the JavaScript functions <code>setMode()</code> and <code>changeThr()</code>. Update <code>update()</code> to show the mode and limit.</div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="s">
+  <span class="tag a">Activity 2</span>
+  <h2>Full Code: Smart Thermostat</h2>
+  <div class="cb"><span class="mu">Complete upgraded program. Change only the two Wi-Fi lines.</span><button onclick="copyCode('c2',this)">Copy full code</button></div>
+  <textarea id="c2" class="code" readonly wrap="off" spellcheck="false">/*
+  ACTIVITY 2: ESP32-S3 Smart Thermostat
+  Adds: AUTO/MANUAL mode, adjustable temperature limit, hysteresis
+  Libraries: "DHT sensor library" (Adafruit), "Adafruit Unified Sensor"
+  Board: ESP32S3 Dev Module
+  Wiring: DHT11 DATA -> GPIO 4, Output (LED/relay/fan) -> GPIO 5
+*/
+
+#include <WiFi.h>
+#include <WebServer.h>
+#include <DHT.h>
+
+// ---------- User settings ----------
+const char* WIFI_SSID     = "YOUR_WIFI_NAME";
+const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+
+#define DHT_PIN     4
+#define DHT_TYPE    DHT11
+#define OUTPUT_PIN  5
+#define RELAY_ACTIVE_LOW false   // set true if your relay turns on with LOW
+// -----------------------------------
+
+DHT dht(DHT_PIN, DHT_TYPE);
+WebServer server(80);
+
+bool outputOn = false;
+bool autoMode = false;          // NEW: false = MANUAL, true = AUTO
+float threshold = 30.0;         // NEW: temperature limit in C
+const float HYST = 1.0;         // NEW: hysteresis gap in C
+
+float lastTemp = NAN;
+float lastHum  = NAN;
+unsigned long lastRead = 0;
+const unsigned long READ_INTERVAL = 2000;
+
+void applyOutput() {
+  bool level = RELAY_ACTIVE_LOW ? !outputOn : outputOn;
+  digitalWrite(OUTPUT_PIN, level ? HIGH : LOW);
+}
+
+void readSensor() {
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+  if (!isnan(h) && !isnan(t)) {
+    lastHum = h;
+    lastTemp = t;
+  }
+}
+
+// NEW: thermostat logic with hysteresis
+void runAuto() {
+  if (!autoMode || isnan(lastTemp)) return;
+  if (lastTemp >= threshold) outputOn = true;
+  else if (lastTemp <= threshold - HYST) outputOn = false;
+  applyOutput();
+}
+
+const char INDEX_HTML[] PROGMEM = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ESP32-S3 Thermostat</title>
+<style>
+  body { font-family: Arial, sans-serif; background:#111; color:#eee; text-align:center; margin:0; padding:20px; }
+  h1 { font-size:1.4rem; }
+  .card { background:#1e1e1e; border-radius:12px; padding:20px; margin:15px auto; max-width:340px; }
+  .value { font-size:2.6rem; font-weight:bold; }
+  .label { color:#999; }
+  button { font-size:1.1rem; padding:12px 24px; margin:6px; border:0; border-radius:8px; cursor:pointer; color:#fff; }
+  #on  { background:#2e9e4f; }
+  #off { background:#c0392b; }
+  .mode { background:#2a6fdb; }
+  .small { padding:8px 18px; font-size:1.3rem; background:#555; }
+  #state, #mode { font-size:1.6rem; font-weight:bold; }
+</style>
+</head>
+<body>
+  <h1>ESP32-S3 Smart Thermostat</h1>
+
+  <div class="card">
+    <div class="label">Temperature</div>
+    <div class="value"><span id="temp">--</span> &amp;deg;C</div>
+  </div>
+
+  <div class="card">
+    <div class="label">Humidity</div>
+    <div class="value"><span id="hum">--</span> %</div>
+  </div>
+
+  <div class="card">
+    <div class="label">Output</div>
+    <div id="state">--</div>
+    <button id="on"  onclick="setOutput(1)">ON</button>
+    <button id="off" onclick="setOutput(0)">OFF</button>
+  </div>
+
+  <div class="card">
+    <div class="label">Mode</div>
+    <div id="mode">--</div>
+    <button class="mode" onclick="setMode(1)">AUTO</button>
+    <button class="mode" onclick="setMode(0)">MANUAL</button>
+    <div class="label" style="margin-top:14px">Temperature limit (&amp;deg;C)</div>
+    <button class="small" onclick="changeThr(-1)">-</button>
+    <span class="value" id="thr">--</span>
+    <button class="small" onclick="changeThr(1)">+</button>
+  </div>
+
+<script>
+let thr = 30;
+async function update() {
+  try {
+    const r = await fetch('/data');
+    const d = await r.json();
+    document.getElementById('temp').textContent = d.temp === null ? '--' : d.temp.toFixed(1);
+    document.getElementById('hum').textContent  = d.hum  === null ? '--' : d.hum.toFixed(0);
+    const s = document.getElementById('state');
+    s.textContent = d.output ? 'ON' : 'OFF';
+    s.style.color = d.output ? '#2ecc71' : '#e74c3c';
+    document.getElementById('mode').textContent = d.auto ? 'AUTO' : 'MANUAL';
+    thr = d.thr;
+    document.getElementById('thr').textContent = d.thr;
+  } catch (e) { }
+}
+async function setOutput(v) { await fetch('/set?state=' + v); update(); }
+async function setMode(a)   { await fetch('/mode?auto=' + a); update(); }
+async function changeThr(x) { await fetch('/thr?value=' + (thr + x)); update(); }
+update();
+setInterval(update, 2000);
+</script>
+</body>
+</html>
+)rawliteral";
+
+void handleRoot() {
+  server.send_P(200, "text/html", INDEX_HTML);
+}
+
+void handleData() {
+  String json = "{\"temp\":";
+  json += isnan(lastTemp) ? "null" : String(lastTemp, 1);
+  json += ",\"hum\":";
+  json += isnan(lastHum) ? "null" : String(lastHum, 0);
+  json += ",\"output\":";
+  json += outputOn ? "true" : "false";
+  json += ",\"auto\":";                         // NEW
+  json += autoMode ? "true" : "false";          // NEW
+  json += ",\"thr\":";                          // NEW
+  json += String(threshold, 0);                 // NEW
+  json += "}";
+  server.send(200, "application/json", json);
+}
+
+void handleSet() {
+  if (server.hasArg("state")) {
+    autoMode = false;                           // NEW: manual press cancels AUTO
+    outputOn = (server.arg("state") == "1");
+    applyOutput();
+  }
+  server.send(200, "text/plain", outputOn ? "ON" : "OFF");
+}
+
+// NEW: switch between AUTO and MANUAL
+void handleMode() {
+  if (server.hasArg("auto")) autoMode = (server.arg("auto") == "1");
+  server.send(200, "text/plain", autoMode ? "AUTO" : "MANUAL");
+}
+
+// NEW: change the temperature limit (kept between 0 and 50 C)
+void handleThr() {
+  if (server.hasArg("value")) threshold = constrain(server.arg("value").toFloat(), 0.0, 50.0);
+  server.send(200, "text/plain", String(threshold, 0));
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(500);
+
+  pinMode(OUTPUT_PIN, OUTPUT);
+  applyOutput();  // start OFF
+
+  dht.begin();
+
+  Serial.printf("Connecting to %s", WIFI_SSID);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println();
+  Serial.print("Connected. Open http://");
+  Serial.println(WiFi.localIP());
+
+  server.on("/", handleRoot);
+  server.on("/data", handleData);
+  server.on("/set", handleSet);
+  server.on("/mode", handleMode);               // NEW
+  server.on("/thr", handleThr);                 // NEW
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+
+  if (millis() - lastRead >= READ_INTERVAL) {
+    lastRead = millis();
+    readSensor();
+    runAuto();                                  // NEW
+  }
+}
+</textarea>
+</section>
+
+<!-- 11 -->
+<section class="s">
+  <span class="tag">Review</span>
+  <h2>Check Your Understanding</h2>
+  <details><summary>1. In this project, which device is the server and which is the client?</summary><p class="ok">The ESP32-S3 is the server; the browser on your phone or computer is the client.</p></details>
+  <details><summary>2. Why do we read the DHT11 only every 2 seconds?</summary><p class="ok">The DHT11 is a slow sensor and needs time between measurements; reading too fast gives errors.</p></details>
+  <details><summary>3. What problem does hysteresis solve?</summary><p class="ok">It stops the output from rapidly switching ON and OFF when the temperature hovers around the limit.</p></details>
+  <details><summary>4. What does the route <code>/thr?value=32</code> do?</summary><p class="ok">It sets the temperature limit to 32 °C (the code keeps it between 0 and 50).</p></details>
+  <div class="c" style="margin-top:14px"><h3>Challenges</h3>
+    <ol><li>Change <code>HYST</code> to 2.0 and observe the difference.</li><li>Add a second output (a buzzer) that sounds above 35 °C.</li><li>Add a humidity limit as well as a temperature limit.</li><li>Draw a graph of the last 20 readings on the web page.</li></ol></div>
+</section>
+
+</div>
+<div id="nav">
+  <button id="prev" class="ghost">← Back</button>
+  <span id="pg" class="mu">1 / 11</span>
+  <button id="next">Next →</button>
+</div>
+<script>
+const S=[...document.querySelectorAll('.s')];let i=0;
+function go(n){
+  i=Math.max(0,Math.min(S.length-1,n));
+  S.forEach((s,k)=>s.classList.toggle('on',k===i));
+  document.getElementById('pg').textContent=(i+1)+' / '+S.length;
+  document.getElementById('bar').style.width=((i+1)/S.length*100)+'%';
+  document.getElementById('prev').disabled=i===0;
+  document.getElementById('next').disabled=i===S.length-1;
+  document.getElementById('main').scrollTop=0;
+}
+document.getElementById('prev').onclick=()=>go(i-1);
+document.getElementById('next').onclick=()=>go(i+1);
+addEventListener('keydown',e=>{
+  if(e.target.tagName==='TEXTAREA')return;
+  if(e.key==='ArrowRight')go(i+1);
+  if(e.key==='ArrowLeft')go(i-1);
+});
+function copyCode(id,btn){
+  const t=document.getElementById(id);
+  const done=()=>{btn.textContent='Copied ✓';setTimeout(()=>{btn.textContent='Copy full code'},1800)};
+  const fb=()=>{t.focus();t.select();try{document.execCommand('copy');done()}catch(e){btn.textContent='Press Ctrl+C'}};
+  try{
+    if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t.value).then(done,fb)}else{fb()}
+  }catch(e){fb()}
+}
+go(0);
+</script>
+</body>
+</html>
